@@ -20,7 +20,8 @@ Entity-screening demo: analyst screens a name against a **synthetic** watchlist 
 - Never hold a DB transaction open across an Elasticsearch or LLM call. `@Transactional` lives in `CaseReviewService`, not in the orchestrating `ScreeningService` (also avoids the self-invocation proxy trap).
 - Match score (0–100, `MatchScoringService`) is separate from Elasticsearch `_score`. Never present `_score` as risk.
 - Scoring is deterministic and every point is explained by a `MatchSignal`.
-- `review_decision` is append-only.
+- `review_decision` is append-only. Candidate status changes only via `CaseReviewService.recordDecision` (version-checked).
+- Controllers return DTOs built inside the service transaction; never return JPA entities.
 - Schema changes = new Flyway migration (`V{n}__*.sql`); never edit an applied one. `ddl-auto=validate`.
 - Seeding must be idempotent (safe to rerun).
 - No real-world compliance claims; all data is synthetic.
@@ -33,5 +34,6 @@ Entity-screening demo: analyst screens a name against a **synthetic** watchlist 
 
 ## Verification expectations
 - Run the relevant tests after every change and report real output; never claim a pass without running.
-- Integration tests use real containers (`TestcontainersConfiguration`) where mocks would hide behavior (queries, transactions, migrations).
+- Integration tests use real containers where mocks would hide behavior (queries, transactions, migrations). Every `*IT` class is annotated with exactly `@IntegrationTest` (one shared Spring context + containers); don't add per-class properties.
+- After moving/deleting classes run `./mvnw clean verify` (incremental compile can miss stale references).
 - Record surprises in `docs/JOURNAL.md`, decisions in `docs/DECISIONS.md`, interview-worthy concepts in `docs/INTERVIEW_NOTES.md`.

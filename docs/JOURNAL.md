@@ -2,6 +2,15 @@
 
 Meaningful surprises and how they were resolved. Newest first.
 
+## 2026-11-01 — Phase 3: Review workflow
+- **Migration discipline:** case history needed the record snapshot (name, country, program, remarks, search relevance). V1 was already applied to the dev DB, so this is `V2__candidate_snapshot.sql`; Flyway applied it to the existing Compose database on next startup.
+- **Package cycle avoided:** `ScoredCandidate` moved from `screening` to `scoring` — otherwise `review → screening → review`.
+- **Stale incremental build:** after deleting `ScreeningResponse`, `mvnw test-compile` printed "Nothing to compile" although tests referenced the removed class. `mvnw clean verify` is the trustworthy check after moves/deletes.
+- **IDENTITY ids vs. response ids:** with `GenerationType.IDENTITY`, `persist` INSERTs immediately to get the id. Decisions are saved explicitly through `ReviewDecisionRepository` so the returned `CaseDetail` contains decision ids (a cascade would only insert at flush, after the DTO was built). Version is not exposed in the API because it is bumped at flush, after the DTO is built.
+- **Timestamp precision:** `Instant.now()` has nanoseconds, Postgres `timestamptz` stores microseconds — the create response and a later GET differed. Truncated to micros in the service; the round-trip test (`usingRecursiveComparison`) guards it.
+- **One test context:** introduced `@IntegrationTest` meta-annotation; log confirms 1 context, 1 seed, 1 Postgres container for all 4 IT classes.
+- **Verified:** `./mvnw clean verify` → 27 unit + 31 integration tests pass. Manual run with SQL logging: GET case = 2 SELECTs (join + batched `= any(?)`), history = 1 SELECT, candidate UPDATE has `where id=? and version=?`, case UPDATE only when its status changed. 404 returns ProblemDetail.
+
 ## 2026-11-01 — Phase 2: Screening engine
 - **Scoring false positive found by test:** `differentSurnameScoresLow` failed — "John Doe" vs "John Smith" scored 53. Probed Jaro-Winkler directly: `jw("doe","john") = 0.53`, so an unrelated word earned half credit. Added a 0.80 per-word noise floor (D13) rather than loosening the test. Result: below threshold.
 - **MockMvcTester is lazy:** `mvc.post()...content(...)` returns a builder; each `assertThat(builder)` re-executed the request (Mockito saw 7 calls for 7 assertions). Fixed with `.exchange()` to execute once.

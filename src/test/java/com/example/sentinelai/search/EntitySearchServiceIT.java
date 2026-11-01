@@ -6,25 +6,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import com.example.sentinelai.TestcontainersConfiguration;
+import com.example.sentinelai.IntegrationTest;
 import com.example.sentinelai.domain.EntityType;
 import com.example.sentinelai.domain.ScreeningQuery;
-import com.example.sentinelai.screening.ScoredCandidate;
+import com.example.sentinelai.scoring.ScoredCandidate;
 import com.example.sentinelai.screening.ScreeningService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 
 /**
  * Real Elasticsearch (Testcontainers) seeded from the real watchlist.json at startup.
  * These cases double as the documented demo examples.
  */
-@SpringBootTest
-@Import(TestcontainersConfiguration.class)
+@IntegrationTest
 class EntitySearchServiceIT {
 
     @Autowired EntitySearchService searchService;
@@ -55,7 +52,7 @@ class EntitySearchServiceIT {
         assertThat(searchIds).as("Elasticsearch top 3 for '%s'", name).contains(expectedId);
         assertThat(searchIds.indexOf(expectedId)).isLessThan(3);
 
-        List<ScoredCandidate> scored = screeningService.screen(query);
+        List<ScoredCandidate> scored = screeningService.scoreCandidates(query);
         assertThat(scored).as("scored candidates for '%s'", name).isNotEmpty();
         assertThat(scored.getFirst().record().id()).isEqualTo(expectedId);
     }
@@ -69,16 +66,16 @@ class EntitySearchServiceIT {
 
     @Test
     void reversedNamesAreBothReturnedAndIdentifierDisambiguates() {
-        List<ScoredCandidate> nameOnly = screeningService.screen(ScreeningQuery.of("Li Wei", PERSON, null, null));
+        List<ScoredCandidate> nameOnly = screeningService.scoreCandidates(ScreeningQuery.of("Li Wei", PERSON, null, null));
         assertThat(nameOnly).extracting(c -> c.record().id()).contains("WL-0007", "WL-0008");
 
-        List<ScoredCandidate> withId = screeningService.screen(ScreeningQuery.of("Li Wei", PERSON, null, "P-SG-K7712098"));
+        List<ScoredCandidate> withId = screeningService.scoreCandidates(ScreeningQuery.of("Li Wei", PERSON, null, "P-SG-K7712098"));
         assertThat(withId.getFirst().record().id()).isEqualTo("WL-0008");
     }
 
     @Test
     void entityTypeMismatchIsRankedBelowMatchingType() {
-        List<ScoredCandidate> scored = screeningService.screen(ScreeningQuery.of("Petrova Consulting", PERSON, null, null));
+        List<ScoredCandidate> scored = screeningService.scoreCandidates(ScreeningQuery.of("Petrova Consulting", PERSON, null, null));
         // The organization is still shown (type is a penalty, not a filter) ...
         assertThat(scored).extracting(c -> c.record().id()).contains("WL-0002");
         // ... but with the type-mismatch penalty visible in its evidence.
@@ -88,7 +85,7 @@ class EntitySearchServiceIT {
 
     @Test
     void unrelatedNameProducesNoScoredCandidates() {
-        assertThat(screeningService.screen(ScreeningQuery.of("Zebulon Quackenbush", PERSON, null, null))).isEmpty();
+        assertThat(screeningService.scoreCandidates(ScreeningQuery.of("Zebulon Quackenbush", PERSON, null, null))).isEmpty();
     }
 
     @Test

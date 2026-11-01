@@ -15,7 +15,7 @@ public record MatchResult(int score, Band band, String matchedName, List<MatchSi
     public enum Band {
         HIGH, MEDIUM, LOW;
 
-        static Band of(int score) {
+        public static Band of(int score) {
             if (score >= 80) {
                 return HIGH;
             }

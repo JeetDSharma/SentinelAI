@@ -28,18 +28,27 @@ React (Vite, Mantine) ──/api──▶ Spring Boot modular monolith
 
 Candidate snapshots (name, score, signals at screening time) are audit evidence — what the analyst actually saw — not a duplicated watchlist.
 
-## Schema (Flyway `V1__init.sql`)
-- `screening_case` (query fields, status, created_at)
-- `case_candidate` (case FK, watchlist_id, matched_name, score, signals JSONB, status, version)
+## Schema (Flyway `V1__init.sql`, `V2__candidate_snapshot.sql`)
+- `screening_case` (query fields, status OPEN/COMPLETED, created_at)
+- `case_candidate` (case FK, watchlist_id, record snapshot: name/type/country/program/remarks, matched_name, score, signals JSONB, search_relevance, status, version)
 - `review_decision` (candidate FK, decision, note, decided_at) — append-only
+
+## Transactions (`CaseReviewService`, the only class with `@Transactional`)
+| Method | Statements | Notes |
+|---|---|---|
+| `createCase` | INSERT case + N × INSERT candidate | all-or-nothing; runs *after* the Elasticsearch call returns |
+| `recordDecision` | INSERT decision · UPDATE candidate `WHERE version = ?` · UPDATE case (only if status changed) | concurrent decision on the same candidate → 409, loser fully rolled back |
+| `getCase` (read-only) | 2 SELECTs: case ⟕ candidates, then decisions `WHERE candidate_id = ANY(?)` | `default_batch_fetch_size=50` avoids N+1 |
+| `recentCases` (read-only) | 1 aggregate SELECT (JPQL constructor expression) | no entities loaded |
+
 
 ## REST API
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/api/screenings` | Screen an entity → case + candidates |
-| GET | `/api/screenings?limit=20` | Recent history |
-| GET | `/api/screenings/{id}` | Case detail |
-| POST | `/api/screenings/{caseId}/candidates/{candidateId}/decisions` | Record a decision |
+| POST | `/api/screenings` | Screen an entity → 201 + `Location`, body = `CaseDetail` |
+| GET | `/api/screenings?limit=20` | Recent history (`CaseSummary[]`, limit 1–100) |
+| GET | `/api/screenings/{id}` | `CaseDetail` with candidates and decision history, 404 if unknown |
+| POST | `/api/screenings/{caseId}/candidates/{candidateId}/decisions` | `{decision, note?}` → 201 + updated `CaseDetail`; 404 if candidate not in case; 409 on concurrent update |
 | GET | `/actuator/health` | DB + ES health |
 
 ## Candidate retrieval (Elasticsearch)

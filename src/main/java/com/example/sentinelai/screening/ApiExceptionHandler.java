@@ -1,5 +1,6 @@
 package com.example.sentinelai.screening;
 
+import com.example.sentinelai.review.NotFoundException;
 import com.example.sentinelai.search.SearchUnavailableException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -44,6 +46,20 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
                 "The watchlist search service is unavailable. Please retry shortly.");
         problem.setTitle("Search unavailable");
+        return problem;
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    ProblemDetail notFound(NotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    /** Two transactions changed the same candidate concurrently; the later commit lost the version check. */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    ProblemDetail concurrentUpdate(ObjectOptimisticLockingFailureException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "This candidate was updated by someone else. Reload the case and try again.");
+        problem.setTitle("Concurrent update");
         return problem;
     }
 }

@@ -57,3 +57,19 @@ Short records of consequential choices. Format: decision · reason · trade-off.
 ### D14. Reseed via new index + atomic alias swap
 **Reason:** Spring Boot runs `ApplicationRunner`s *after* Tomcat starts accepting requests. Delete-and-recreate left a ~2 s window returning 503 or — worse — empty results that look like "no match". Swapping an alias is atomic, so searches see the old or new complete index.
 **Trade-off:** ~15 extra lines; physical index names carry a timestamp.
+
+### D15. Persist a snapshot of each candidate (V2)
+**Reason:** A case must show what the analyst saw at decision time, even after the watchlist is reseeded or edited. This is audit evidence, not a second watchlist: it is never searched.
+**Trade-off:** A few denormalized columns per candidate.
+
+### D16. Optimistic locking (`@Version`) on candidates, not pessimistic locks
+**Reason:** Conflicts are rare (two analysts on the same candidate at the same instant). Optimistic locking holds no row locks during the request and turns a would-be lost update into a clear 409.
+**Trade-off:** The client must reload and retry on 409. Stale UI views (decided minutes after loading) are not detected — that would need the client to send the version it saw.
+
+### D17. DTOs built inside the transaction; open-in-view disabled
+**Reason:** Lazy associations are only loadable while the persistence context is open. Mapping to records in the service makes the SQL predictable (verified: 2 queries per case) and keeps JPA entities out of the API contract.
+**Trade-off:** A mapping method (`CaseDetail.from`).
+
+### D18. History via a single JPQL aggregate query
+**Reason:** `count`/`max`/conditional `sum` over a LEFT JOIN returns everything the history list needs in one query, instead of loading every case with its candidates.
+**Trade-off:** JPQL constructor expression references the DTO by fully-qualified name.
