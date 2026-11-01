@@ -37,3 +37,23 @@ Short records of consequential choices. Format: decision · reason · trade-off.
 ### D9. Elasticsearch security disabled locally
 **Reason:** Removes cert/password setup from the demo path.
 **Trade-off:** Only acceptable on localhost; documented in `docker-compose.yml`.
+
+### D10. Elasticsearch retrieves, Java scores
+**Reason:** BM25 `_score` depends on term statistics of the whole index and the query shape — not comparable across queries and not interpretable. A small Java scorer gives a stable 0–100 with one explained signal per rule, and is unit-testable without infrastructure.
+**Trade-off:** Name normalization exists twice (ES analyzer + `NameNormalizer`); a unit test fails if the abbreviation lists diverge.
+
+### D11. Type and country boost ranking, never filter
+**Reason:** Filtering would silently hide a true match whose record is misclassified. Instead the scorer shows a visible penalty (−15 / −10).
+**Trade-off:** A few more low-scoring candidates retrieved; the min-score threshold trims them.
+
+### D12. Single-word abbreviation synonyms only (`corp => corporation`)
+**Reason:** Multi-word synonyms need `synonym_graph`, which does not combine with fuzzy matching. Single-token replacements work with fuzziness and keep the analyzer simple.
+**Trade-off:** No `"LLC" ↔ "limited liability company"` expansion.
+
+### D13. Jaro-Winkler with a 0.80 per-word noise floor
+**Reason:** Jaro-Winkler is a standard name-matching metric that rewards shared prefixes (typos later in a name cost less). Without the floor, unrelated short words earned partial credit ("doe" vs "john" = 0.53), pushing "John Doe" to 53 against "John Smith".
+**Trade-off:** Hand-tuned threshold; documented and covered by `differentSurnameScoresLow`.
+
+### D14. Reseed via new index + atomic alias swap
+**Reason:** Spring Boot runs `ApplicationRunner`s *after* Tomcat starts accepting requests. Delete-and-recreate left a ~2 s window returning 503 or — worse — empty results that look like "no match". Swapping an alias is atomic, so searches see the old or new complete index.
+**Trade-off:** ~15 extra lines; physical index names carry a timestamp.

@@ -1,0 +1,74 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "filter": {
+        "name_abbreviations": {
+          "type": "synonym",
+          "synonyms": [
+            "corp, corporation => corporation",
+            "inc, incorporated => incorporated",
+            "ltd, limited => limited",
+            "co, company => company",
+            "intl, international => international",
+            "grp, group => group",
+            "hldg, holding => holding",
+            "hldgs, holdings => holdings",
+            "mfg, manufacturing => manufacturing",
+            "svcs, services => services",
+            "bros, brothers => brothers",
+            "assoc, association => association",
+            "natl, national => national"
+          ]
+        }
+      },
+      "char_filter": {
+        "alphanumeric_only": {
+          "type": "pattern_replace",
+          "pattern": "[^A-Za-z0-9]",
+          "replacement": ""
+        }
+      },
+      "normalizer": {
+        "name_exact": {
+          "type": "custom",
+          "filter": ["lowercase", "asciifolding", "trim"]
+        },
+        "identifier": {
+          "type": "custom",
+          "char_filter": ["alphanumeric_only"],
+          "filter": ["uppercase"]
+        }
+      },
+      "analyzer": {
+        "name_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "asciifolding", "name_abbreviations"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id":          { "type": "keyword" },
+      "name": {
+        "type": "text",
+        "analyzer": "name_analyzer",
+        "fields": { "exact": { "type": "keyword", "normalizer": "name_exact" } }
+      },
+      "aliases": {
+        "type": "text",
+        "analyzer": "name_analyzer",
+        "fields": { "exact": { "type": "keyword", "normalizer": "name_exact" } }
+      },
+      "entityType":  { "type": "keyword" },
+      "country":     { "type": "keyword" },
+      "identifiers": { "type": "keyword", "normalizer": "identifier" },
+      "program":     { "type": "keyword" },
+      "remarks":     { "type": "text", "index": false }
+    }
+  }
+}
