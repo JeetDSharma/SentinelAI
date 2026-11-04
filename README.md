@@ -47,5 +47,8 @@ Measured against the seeded synthetic data (`POST /api/screenings`). "Relevance"
 
 Full demo script: Phase 5.
 
+## Architecture page
+Open **http://localhost:5173/#/architecture** (not linked from the workbench): system diagram, screening and review sequence diagrams, schema.
+
 ## Docs
-- [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/DECISIONS.md) · [Interview notes](docs/INTERVIEW_NOTES.md) · [Engineering journal](docs/JOURNAL.md)
+- [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/DECISIONS.md) · [Engineering journal](docs/JOURNAL.md)

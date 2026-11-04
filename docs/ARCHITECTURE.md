@@ -89,3 +89,17 @@ Name similarity = `max(whole, token)` over normalized tokens (accents folded, pu
 
 ## Seeding (`WatchlistSeeder`)
 At startup (`sentinel.watchlist.seed-on-startup=true`): create `watchlist-<ts>` → bulk index the 60 records from `watchlist.json` with fixed ids (`refresh=wait_for`) → one atomic `_aliases` call adds the alias to the new index and removes the old index. Searches never observe a missing or partially filled index. If Elasticsearch is down, seeding logs an error and the app still starts; screening returns 503.
+
+## Frontend (`frontend/`)
+Single screen, React 19 + TypeScript + Mantine 9, no router or state library.
+- `api.ts` — typed fetch client mirroring the Java DTOs; converts `ProblemDetail` responses into `ApiError` (status + field errors).
+- `App.tsx` — owns state (current case, selected candidate, history, loading/error flags) and the health badges.
+- `components/` — `ScreeningForm` (with one-click demo examples), `HistoryPanel`, `CaseView` (candidate table), `CandidateDetail` (signal breakdown, search-relevance disclaimer, review actions, decision timeline).
+- Dev: Vite proxies `/api` and `/actuator` to :8080, so the browser sees one origin and no CORS configuration is needed.
+
+Hidden pages (`src/architecture/`, lazy-loaded chunks, hand-drawn SVG diagrams, no diagram library) present this document visually at `#/architecture`.
+
+Error states: field errors under inputs (400), alert + immediate health re-check on 503/network failure, case reload + message on 409.
+
+## Elasticsearch client tuning
+`ElasticsearchClientConfig` customizes Boot's auto-configured client (doesn't replace it): pooled connections idle > 1 s are validated before reuse, so the first request after an Elasticsearch restart doesn't hit a dead keep-alive connection.

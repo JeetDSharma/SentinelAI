@@ -2,7 +2,7 @@ import '@mantine/core/styles.css'
 import { MantineProvider, createTheme } from '@mantine/core'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
+import Root from './Root.tsx'
 
 const theme = createTheme({
   primaryColor: 'indigo',
@@ -13,7 +13,7 @@ const theme = createTheme({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider theme={theme} defaultColorScheme="light">
-      <App />
+      <Root />
     </MantineProvider>
   </StrictMode>,
 )

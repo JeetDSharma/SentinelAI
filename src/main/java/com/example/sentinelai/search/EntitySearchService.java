@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.example.sentinelai.domain.ScreeningQuery;
 import com.example.sentinelai.domain.WatchlistRecord;
@@ -31,14 +32,15 @@ public class EntitySearchService {
     }
 
     public List<WatchlistHit> findCandidates(ScreeningQuery query) {
+        SearchRequest request = SearchRequest.of(s -> s
+                .index(index)
+                .size(MAX_CANDIDATES)
+                .query(buildQuery(query)));
         SearchResponse<WatchlistRecord> response;
         try {
-            response = client.search(s -> s
-                    .index(index)
-                    .size(MAX_CANDIDATES)
-                    .query(buildQuery(query)), WatchlistRecord.class);
+            response = client.search(request, WatchlistRecord.class);
         } catch (IOException | ElasticsearchException e) {
-            // IOException covers connection refused / timeouts (TransportException extends it);
+            // IOException covers connection refused / reset / timeouts (TransportException extends it);
             // ElasticsearchException covers error responses such as index_not_found.
             throw new SearchUnavailableException("Watchlist search failed: " + e.getMessage(), e);
         }
@@ -51,7 +53,7 @@ public class EntitySearchService {
     /**
      * <pre>
      * bool
-     *   must:   bool (at least one should)            -- a record must match on name or identifier
+     *   must:   bool (at least one should)           -- a record must match on name or identifier
      *             exact name / alias      boost 10    -- keyword subfield, normalized (case, accents)
      *             phrase name / alias     boost 3     -- words in order, small gaps allowed
      *             fuzzy name / alias                  -- typos (AUTO edits), any word order, partial names

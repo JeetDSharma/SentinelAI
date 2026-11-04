@@ -73,3 +73,11 @@ Short records of consequential choices. Format: decision · reason · trade-off.
 ### D18. History via a single JPQL aggregate query
 **Reason:** `count`/`max`/conditional `sum` over a LEFT JOIN returns everything the history list needs in one query, instead of loading every case with its candidates.
 **Trade-off:** JPQL constructor expression references the DTO by fully-qualified name.
+
+### D19. Plain React state, no router / data-fetching library
+**Reason:** One screen, four endpoints. `useState` + a small typed `api.ts` is fully explainable; error handling (ProblemDetail → field errors, 503, 409) is explicit.
+**Trade-off:** No caching/deduplication of requests; would add TanStack Query if the UI grew.
+
+### D20. Validate idle HTTP connections instead of retrying searches
+**Reason:** The root cause of post-restart failures was dead pooled keep-alive connections. A retry was tried first and failed in a live test (several dead connections in the pool). `validateAfterInactivity(1s)` fixes the cause with one config bean.
+**Trade-off:** A cheap staleness check on connections idle > 1 s. Real network blips still surface as 503 (honest, and the analyst can resubmit).

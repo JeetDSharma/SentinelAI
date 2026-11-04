@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local-only prep notes (never pushed) ###
+docs/INTERVIEW_NOTES.md
+frontend/src/architecture/InternalArchitecturePage.tsx

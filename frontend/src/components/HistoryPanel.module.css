@@ -1,0 +1,16 @@
+.row {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--mantine-radius-sm);
+  border: 1px solid transparent;
+}
+
+.row:hover {
+  background-color: var(--mantine-color-gray-0);
+}
+
+.row[data-active] {
+  background-color: var(--mantine-color-indigo-0);
+  border-color: var(--mantine-color-indigo-2);
+}

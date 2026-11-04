@@ -7,7 +7,7 @@ Entity-screening demo: analyst screens a name against a **synthetic** watchlist 
   `screening/` (REST + orchestration), `search/` (Elasticsearch + seeding), `scoring/` (pure Java), `review/` (JPA entities, transactions)
 - `src/main/resources/db/migration/` — Flyway SQL (schema source of truth)
 - `frontend/` — React 19 + TypeScript + Vite + Mantine, single screen; dev proxy forwards `/api` and `/actuator` to :8080
-- `docs/` — ARCHITECTURE, DECISIONS, INTERVIEW_NOTES, JOURNAL
+- `docs/` — ARCHITECTURE, DECISIONS, JOURNAL (plus local-only, gitignored prep notes: `docs/INTERVIEW_NOTES.md`, `frontend/src/architecture/InternalArchitecturePage.tsx` — never commit them)
 
 ## Commands
 - Infra: `docker compose up -d --wait` (Postgres on **5433**, ES on 9200) · reset: `docker compose down -v`

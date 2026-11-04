@@ -2,6 +2,15 @@
 
 Meaningful surprises and how they were resolved. Newest first.
 
+## 2026-11-01 — Phase 4: Dashboard
+- **Mantine 9 API change:** `Grid gutter` was renamed to `gap` (TypeScript caught it at build).
+- **Browser-verified flow (Claude in Chrome):** demo example → candidates → evidence → dismiss (auto-advances to next pending) → escalate → case COMPLETED → decision history with note; history panel updates.
+- **UX bug found in the browser:** after a failed screening the previous case stayed on screen under the new query — readable as the new search's result. Failed screening now clears the case; health badges re-check immediately instead of waiting for the 15 s poll. Verified with Elasticsearch stopped: red badge, clear alert, no case written (history unchanged).
+- **Real resilience bug:** after restarting Elasticsearch, the *first* screening failed with `Connection reset` — the HTTP client reused dead keep-alive connections from its pool.
+  - First attempt: retry the (read-only) search once. Unit test found an edge case (`addSuppressed(self)` throws when the same exception instance is rethrown). Live re-test: **still 503** — the pool held several dead connections, so the retry got another one.
+  - Root-cause fix: `ConnectionConfig.setValidateAfterInactivity(1s)` via Boot's `Rest5ClientBuilderCustomizer`. Retry code removed (it didn't solve the problem). Live re-test, two restart rounds: first request after each restart → 201, health UP, 0 failed screenings.
+- **Verified:** `./mvnw clean verify` → 27 unit + 31 integration pass; `npm run build` + `npm run lint` clean.
+
 ## 2026-11-01 — Phase 3: Review workflow
 - **Migration discipline:** case history needed the record snapshot (name, country, program, remarks, search relevance). V1 was already applied to the dev DB, so this is `V2__candidate_snapshot.sql`; Flyway applied it to the existing Compose database on next startup.
 - **Package cycle avoided:** `ScoredCandidate` moved from `screening` to `scoring` — otherwise `review → screening → review`.
