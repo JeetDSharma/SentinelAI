@@ -12,7 +12,7 @@
     <artifactId>SentinelAI</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Sentinel</name>
-    <description>AI-assisted entity screening demo (Spring Boot + Elasticsearch + PostgreSQL)</description>
+    <description>Explainable entity screening demo (Spring Boot + Elasticsearch + PostgreSQL)</description>
 
     <properties>
         <!-- Compiled with javac -release 21; runs on any JDK >= 21 (the dev machine uses 25). -->

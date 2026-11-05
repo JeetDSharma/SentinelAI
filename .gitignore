@@ -35,3 +35,4 @@ build/
 ### Local-only prep notes (never pushed) ###
 docs/INTERVIEW_NOTES.md
 frontend/src/architecture/InternalArchitecturePage.tsx
+docs/DEMO_SCRIPT.md

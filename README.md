@@ -1,4 +1,4 @@
-# Sentinel — AI-Assisted Entity Screening
+# Sentinel — Explainable Entity Screening
 
 A compact entity-screening application: an analyst screens a person or organization against a **synthetic** watchlist, sees scored candidate matches with explicit evidence, and records review decisions.
 
