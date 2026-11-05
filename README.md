@@ -45,8 +45,6 @@ Measured against the seeded synthetic data (`POST /api/screenings`). "Relevance"
 | `Petrova Consulting`, PERSON | WL-0002 | 55 LOW | type mismatch penalized, not hidden |
 | `Zebulon Quackenbush`, PERSON | — | — | no candidates |
 
-Full demo script: Phase 5.
-
 ## Architecture page
 Open **http://localhost:5173/#/architecture** (not linked from the workbench): system diagram, screening and review sequence diagrams, schema.
 
