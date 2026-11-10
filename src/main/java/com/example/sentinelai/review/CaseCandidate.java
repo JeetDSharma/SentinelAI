@@ -109,7 +109,7 @@ public class CaseCandidate {
         this.screeningCase = screeningCase;
     }
 
-    /** Appends to the audit trail and moves the candidate to the decided status. Persisted by cascade. */
+    /** Appends to the audit trail and moves the candidate to the decided status. The caller saves the returned entry (no cascade on decisions). */
     ReviewDecision decide(ReviewDecision.Decision decision, String note, Instant at) {
         ReviewDecision entry = new ReviewDecision(this, decision, note, at);
         decisions.add(entry);
